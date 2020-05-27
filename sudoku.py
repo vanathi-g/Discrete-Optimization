@@ -1,14 +1,12 @@
-#program to solve a sudoku
+#Sudoku Solver (applying constraint programming concepts)
+#Description:
+#	*Done using ortools library (offered by Google)
+#	*Input: text file that has the sudoku (see example file for format)
+#	*Outpu: solved sudoku displayed on console
+
 from ortools.sat.python import cp_model
 
-#to print the sudoku
-def printSudoku(sudoku):
-	for i in range(9):
-		for j in range(9):
-			print(sudoku[i][j], end=' ')
-	print()
-
-#reading input from text file
+#To read input from text file (using default if no file provided)
 def inputSudoku():
 	filename = input("Enter file name: ")
 	if filename == '':
@@ -24,6 +22,7 @@ def inputSudoku():
 	fp.close()
 	return sudoku
 
+#To display the solved sudoku
 def displaySolution(solver):
 	for i in range(9):
 		for j in range(9):
@@ -31,24 +30,28 @@ def displaySolution(solver):
 			print("%i" % solver.Value(globals()['x' + ''.join(ind)]), end = ' ')
 		print()
 
-#cell indices as variable names:
+#Getting input
 sudoku = inputSudoku()
+
+#Creating variable names using the indices of each cell i.e. [x00, x01, ... , x88]
 indices = [(chr(row+ord('0')), chr(col+ord('0'))) for row in range(9) for col in range(9)]
 for i in range(81):
 	indices[i] = 'x'+''.join(indices[i])
 
-#creating the CP-SAT model
+#Creating the CP-SAT model
 model = cp_model.CpModel()
 
-#adding variables (each cell is a variable)
+#Adding variables to the model using variable names created earlier (each cell is a variable)
 for num, ind in zip(sudoku, indices):
 	if num == 0:
 		globals()[ind] = model.NewIntVar(1, 9, ind)
 	else:
 		globals()[ind] = model.NewConstant(num)
 
+#NOTE: globals()[<name>] creates dynamic variables
 
-#creating alldifferent constraints for rows and columns
+
+#Creating AllDifferent constraints for rows and columns (no two values in same row or column may be same)
 num = 0
 for c in range(9):
 
@@ -66,7 +69,7 @@ for c in range(9):
 
 	num+=1
 
-#finally, create alldifferent constraints for 3x3 boxes
+#Finally, creating AllDifferent constraints for 3x3 boxes 
 rowNum = 0
 while(rowNum < 9):
 	colNum = 0
@@ -79,8 +82,10 @@ while(rowNum < 9):
 		colNum+=3
 	rowNum+=3
 
+#Creating and calling the CpSolver for the variables and constraints created
 solver = cp_model.CpSolver()
 status = solver.Solve(model)
 
+#Displaying the solution
 if status == cp_model.FEASIBLE:
 	displaySolution(solver)
